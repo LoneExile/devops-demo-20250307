@@ -2,7 +2,7 @@ replicaCount: 1
 image:
   repository: harbor.voidbox.io/loneexile/frontend-demo
   pullPolicy: IfNotPresent
-  tag: "13"
+  tag: "14"
 nameOverride: ""
 fullnameOverride: ""
 serviceAccount:
