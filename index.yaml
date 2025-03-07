@@ -3,6 +3,20 @@ entries:
   backend-demo:
   - apiVersion: v2
     appVersion: latest
+    created: "2025-03-07T04:35:31.734987841Z"
+    description: A Helm chart for backend-demo application
+    digest: 5ed260db7275546f5237051817ded5d0ef65b7be873dbe9826af37b130b50803
+    maintainers:
+    - email: Hello@Apinant.dev
+      name: LoneExile
+      url: https://github.com/LoneExile/devops-demo-20250307
+    name: backend-demo
+    type: application
+    urls:
+    - https://github.com/LoneExile/devops-demo-20250307/releases/download/backend-demo-0.1.1/backend-demo-0.1.1.tgz
+    version: 0.1.1
+  - apiVersion: v2
+    appVersion: latest
     created: "2025-03-07T03:49:42.564421953Z"
     description: A Helm chart for backend-demo application
     digest: 4d38cb89000b8e872d4435f2475599c1303fbfeeffe50051b08177cb6fadab54
@@ -15,4 +29,19 @@ entries:
     urls:
     - https://github.com/LoneExile/devops-demo-20250307/releases/download/backend-demo-0.1.0/backend-demo-0.1.0.tgz
     version: 0.1.0
-generated: "2025-03-07T03:49:42.564427122Z"
+  frontend-demo:
+  - apiVersion: v2
+    appVersion: latest
+    created: "2025-03-07T04:35:31.826949043Z"
+    description: A Helm chart for frontend-demo application
+    digest: 096e8d5544113e7ebfd55c3e52ba3d5f2d8257612b362516ba9d2dba2bff24f3
+    maintainers:
+    - email: Hello@Apinant.dev
+      name: LoneExile
+      url: https://github.com/LoneExile/devops-demo-20250307
+    name: frontend-demo
+    type: application
+    urls:
+    - https://github.com/LoneExile/devops-demo-20250307/releases/download/frontend-demo-0.1.0/frontend-demo-0.1.0.tgz
+    version: 0.1.0
+generated: "2025-03-07T04:35:31.826960464Z"
