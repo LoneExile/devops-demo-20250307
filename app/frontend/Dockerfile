@@ -7,6 +7,8 @@ RUN npm install -g pnpm
 
 COPY package.json pnpm-lock.yaml ./
 
+ENV PUBLIC_BACKEND_URL=backend-backend-demo:8080/
+
 RUN pnpm install --frozen-lockfile
 
 COPY . .
@@ -16,14 +18,6 @@ RUN pnpm build
 FROM nginx:alpine
 
 COPY --from=build /app/dist /usr/share/nginx/html
-
-RUN adduser -D -u 1000 -g 'nginx' nginx-user && \
-    chown -R nginx-user:nginx-user /usr/share/nginx/html && \
-    chmod -R 755 /usr/share/nginx/html && \
-    sed -i 's/user  nginx;/user  nginx-user;/' /etc/nginx/nginx.conf && \
-    chmod 755 /var/log/nginx /var/cache/nginx /var/run
-
-USER nginx-user
 
 EXPOSE 80
 
