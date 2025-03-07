@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  backend:
+    image: harbor.voidbox.io/loneexile/backend-demo:latest
+    container_name: backend-demo
+    ports:
+      - "8082:8080"
+    restart: unless-stopped
+
+  frontend:
+    image: harbor.voidbox.io/loneexile/frontend-demo:latest
+    container_name: frontend-demo
+    ports:
+      - "8081:80"
+    restart: unless-stopped

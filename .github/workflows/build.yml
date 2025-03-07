@@ -1,0 +1,167 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  trivy-scan:
+    name: Trivy Dockerfile Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner on Dockerfile Backend
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          scan-ref: 'app/backend/Dockerfile'
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Run Trivy vulnerability scanner on Dockerfile Frontend
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          scan-ref: 'app/frontend/Dockerfile'
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Run Trivy vulnerability scanner on container image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'golang:1.24-alpine'
+          format: 'table'
+          exit-code: '0'
+          severity: 'CRITICAL,HIGH'
+          
+      - name: Run Trivy vulnerability scanner on second container image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'alpine:3.16'
+          format: 'table'
+          exit-code: '0'
+          severity: 'CRITICAL,HIGH'
+
+  build:
+      runs-on: ubuntu-latest
+      permissions:
+        contents: write
+      steps:
+      - uses: docker/login-action@v3
+        with:
+          registry: harbor.voidbox.io/loneexile
+          username: ${{ secrets.HARBOR_USERNAME  }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
+
+      - uses: actions/checkout@v4
+      - name: BuildAndPushImageOnHarbor
+        run: |
+          docker build app/backend/ -t harbor.voidbox.io/loneexile/backend-demo:${{ github.run_number }}
+          docker push harbor.voidbox.io/loneexile/backend-demo:${{ github.run_number }}
+          docker build app/frontend/ -t harbor.voidbox.io/loneexile/frontend-demo:${{ github.run_number }}
+          docker push harbor.voidbox.io/loneexile/frontend-demo:${{ github.run_number }}
+          
+      - name: Install yq
+        run: |
+          wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/local/bin/yq
+          chmod +x /usr/local/bin/yq
+          
+      - name: Update Helm chart version and image tag
+        run: |
+          # Update backend chart
+          CURRENT_VERSION=$(yq e '.version' charts/backend/Chart.yaml)
+          IFS='.' read -r -a VERSION_PARTS <<< "$CURRENT_VERSION"
+          PATCH_VERSION=$((VERSION_PARTS[2] + 1))
+          NEW_VERSION="${VERSION_PARTS[0]}.${VERSION_PARTS[1]}.$PATCH_VERSION"
+          yq e ".version = \"$NEW_VERSION\"" -i charts/backend/Chart.yaml
+          
+          yq e ".image.tag = \"${{ github.run_number }}\"" -i charts/backend/values.yaml
+          
+          echo "Updated backend chart version to $NEW_VERSION and image tag to ${{ github.run_number }}"
+          
+          # Update frontend chart
+          CURRENT_VERSION=$(yq e '.version' charts/frontend/Chart.yaml)
+          IFS='.' read -r -a VERSION_PARTS <<< "$CURRENT_VERSION"
+          PATCH_VERSION=$((VERSION_PARTS[2] + 1))
+          NEW_VERSION="${VERSION_PARTS[0]}.${VERSION_PARTS[1]}.$PATCH_VERSION"
+          yq e ".version = \"$NEW_VERSION\"" -i charts/frontend/Chart.yaml
+          
+          yq e ".image.tag = \"${{ github.run_number }}\"" -i charts/frontend/values.yaml
+          
+          echo "Updated frontend chart version to $NEW_VERSION and image tag to ${{ github.run_number }}"
+          
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git add charts/backend/Chart.yaml charts/backend/values.yaml charts/frontend/Chart.yaml charts/frontend/values.yaml
+          git commit -m "Update chart version and image tag to ${{ github.run_number }}"
+          
+          git push origin HEAD:${GITHUB_REF}
+
+  release:
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    needs: build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      - name: Install yq
+        run: |
+          wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/local/bin/yq
+          chmod +x /usr/local/bin/yq
+
+      - name: Add maintainers to Chart.yaml
+        run: |
+          set -e
+          for chart in charts/*; do
+            if [ -f "$chart/Chart.yaml" ]; then
+              echo "Processing $chart/Chart.yaml"
+              yq eval '.maintainers' .cr.yaml > maintainers.tmp
+              if [ -s maintainers.tmp ]; then
+                yq eval-all 'select(fileIndex == 0) *+ {"maintainers": (select(fileIndex == 1) | .)}' \
+                  "$chart/Chart.yaml" maintainers.tmp > "$chart/Chart.yaml.new"
+                mv "$chart/Chart.yaml.new" "$chart/Chart.yaml"
+                echo "Successfully updated maintainers in $chart/Chart.yaml"
+              else
+                echo "Warning: No maintainers found in .cr.yaml"
+              fi
+              rm maintainers.tmp
+            fi
+          done
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4.2.0
+
+      - name: Build Helm dependencies
+        env:
+          HELM_EXPERIMENTAL_OCI: "1"
+        run: |
+          for chart in charts/*; do
+            if [ -f "$chart/Chart.yaml" ]; then
+              echo "Building dependencies for $chart"
+              helm dependency build "$chart"
+            fi
+          done
+
+      - name: Run chart-releaser
+        uses: helm/chart-releaser-action@v1.5.0
+        with:
+          config: .cr.yaml
+        env:
+          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"

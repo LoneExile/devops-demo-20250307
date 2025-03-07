@@ -1,0 +1,35 @@
+replicaCount: 1
+image:
+  repository: harbor.voidbox.io/loneexile/backend-demo
+  pullPolicy: IfNotPresent
+  tag: "12"
+nameOverride: ""
+fullnameOverride: ""
+serviceAccount:
+  create: false
+  name: ""
+podAnnotations: {}
+podSecurityContext: {}
+securityContext: {}
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+  nodePort: null
+env:
+  S3_BUCKET_NAME: apinant-test-s3-1
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+nodeSelector: {}
+tolerations: []
+affinity: {}

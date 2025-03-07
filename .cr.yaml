@@ -1,0 +1,7 @@
+owner: LoneExile
+generate-release-notes: true
+skip-existing: true
+maintainers:
+  - name: LoneExile
+    email: Hello@Apinant.dev
+    url: https://github.com/LoneExile/devops-demo-20250307

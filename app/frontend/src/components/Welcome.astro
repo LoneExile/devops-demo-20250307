@@ -1,0 +1,108 @@
+---
+const isProd = import.meta.env.PROD;
+const isDev = import.meta.env.DEV;
+
+console.log(isProd, isDev);
+
+const backend_url = import.meta.env.PUBLIC_BACKEND_URL;
+console.log(backend_url);
+---
+
+<div id="container">
+	<main>
+		<button id="fetchButton">Fetch S3 Files</button>
+		<div id="filesList"></div>
+	</main>
+</div>
+
+<script>
+	const fetchButton = document.getElementById('fetchButton');
+	const filesList = document.getElementById('filesList');
+	const backendUrl = import.meta.env.PUBLIC_BACKEND_URL;
+	if (fetchButton && filesList) {
+		fetchButton.addEventListener('click', async () => {
+			try {
+				filesList.innerHTML = 'Loading...';
+				
+				const response = await fetch(`${backendUrl}files`);
+				if (!response.ok) {
+					throw new Error(`HTTP error! Status: ${response.status}`);
+				}
+				
+				const files = await response.json();
+				
+				// Display the files
+				filesList.innerHTML = '<h3>S3 Files:</h3>';
+				const fileTable = document.createElement('table');
+				fileTable.innerHTML = `
+					<thead>
+						<tr>
+							<th>Name</th>
+							<th>Size</th>
+							<th>Last Modified</th>
+						</tr>
+					</thead>
+					<tbody>
+						${files.map((file: any) => `
+							<tr>
+								<td>${file.key}</td>
+								<td>${file.size > 0 ? formatFileSize(file.size) : 'Directory'}</td>
+								<td>${file.lastModified}</td>
+							</tr>
+						`).join('')}
+					</tbody>
+				`;
+				filesList.appendChild(fileTable);
+			} catch (error) {
+				console.error('Error fetching files:', error);
+				filesList.innerHTML = `<p>Error fetching files: ${(error as Error).message}</p>`;
+			}
+		});
+	}
+	
+	function formatFileSize(bytes: any) {
+		if (bytes === 0) return '0 Bytes';
+		
+		const k = 1024;
+		const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+		const i = Math.floor(Math.log(bytes) / Math.log(k));
+		
+		return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+	}
+</script>
+
+<style>
+	button {
+		padding: 10px 15px;
+		background-color: #4CAF50;
+		color: white;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+		margin: 20px 0;
+	}
+	
+	button:hover {
+		background-color: #45a049;
+	}
+	
+	table {
+		border-collapse: collapse;
+		width: 100%;
+		margin-top: 20px;
+	}
+	
+	th, td {
+		border: 1px solid #ddd;
+		padding: 8px;
+		text-align: left;
+	}
+	
+	th {
+		background-color: #f2f2f2;
+	}
+	
+	tr:nth-child(even) {
+		background-color: #f9f9f9;
+	}
+</style>

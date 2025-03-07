@@ -1,0 +1,78 @@
+---
+# Source: frontend-demo/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-frontend-demo
+  labels:
+    helm.sh/chart: frontend-demo-0.1.0
+    app.kubernetes.io/name: frontend-demo
+    app.kubernetes.io/instance: test
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: frontend-demo
+    app.kubernetes.io/instance: test
+---
+# Source: frontend-demo/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-frontend-demo
+  labels:
+    helm.sh/chart: frontend-demo-0.1.0
+    app.kubernetes.io/name: frontend-demo
+    app.kubernetes.io/instance: test
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: frontend-demo
+      app.kubernetes.io/instance: test
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: frontend-demo
+        app.kubernetes.io/instance: test
+    spec:
+      serviceAccountName: my-app-sa
+      securityContext:
+        {}
+      containers:
+        - name: frontend-demo
+          securityContext:
+            {}
+          image: "harbor.voidbox.io/loneexile/frontend-demo:latest"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 30
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            timeoutSeconds: 2
+          resources:
+            limits:
+              cpu: 200m
+              memory: 256Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
