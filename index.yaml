@@ -1,0 +1,18 @@
+apiVersion: v1
+entries:
+  backend-demo:
+  - apiVersion: v2
+    appVersion: latest
+    created: "2025-03-07T03:49:42.564421953Z"
+    description: A Helm chart for backend-demo application
+    digest: 4d38cb89000b8e872d4435f2475599c1303fbfeeffe50051b08177cb6fadab54
+    maintainers:
+    - email: Hello@Apinant.dev
+      name: LoneExile
+      url: https://github.com/LoneExile/devops-demo-20250307
+    name: backend-demo
+    type: application
+    urls:
+    - https://github.com/LoneExile/devops-demo-20250307/releases/download/backend-demo-0.1.0/backend-demo-0.1.0.tgz
+    version: 0.1.0
+generated: "2025-03-07T03:49:42.564427122Z"
