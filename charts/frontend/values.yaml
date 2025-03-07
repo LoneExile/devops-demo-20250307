@@ -11,6 +11,8 @@ serviceAccount:
 podAnnotations: {}
 podSecurityContext: {}
 securityContext: {}
+env:
+  PUBLIC_BACKEND_URL: backend-demo.default.svc.cluster.local/
 service:
   type: ClusterIP
   port: 80
