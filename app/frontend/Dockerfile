@@ -21,7 +21,9 @@ RUN adduser -D -u 1000 -g 'nginx' nginx-user && \
     chown -R nginx-user:nginx-user /usr/share/nginx/html && \
     chmod -R 755 /usr/share/nginx/html && \
     sed -i 's/user  nginx;/user  nginx-user;/' /etc/nginx/nginx.conf && \
-    chmod 755 /var/log/nginx /var/cache/nginx /var/run
+    mkdir -p /var/cache/nginx/client_temp /var/cache/nginx/proxy_temp /var/cache/nginx/fastcgi_temp /var/cache/nginx/uwsgi_temp /var/cache/nginx/scgi_temp && \
+    chown -R nginx-user:nginx-user /var/cache/nginx /var/log/nginx /var/run && \
+    chmod -R 755 /var/cache/nginx /var/log/nginx /var/run
 
 USER nginx-user
 
