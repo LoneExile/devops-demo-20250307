@@ -2,5 +2,5 @@ apiVersion: v2
 name: backend-demo
 description: A Helm chart for backend-demo application
 type: application
-version: 0.1.4
+version: 0.1.5
 appVersion: "latest"
